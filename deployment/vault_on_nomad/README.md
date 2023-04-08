@@ -2,23 +2,49 @@
 
 Need to run a Consul container in dev mode or it'll throw errors (known bug - https://github.com/hashicorp/waypoint/issues/3376)
 
-Run Nomad in dev mode:
-
+### Run Nomad in dev mode:
 `nomad agent -dev -bind 0.0.0.0`
 
 cd into this directory.
 
-Launch Vault as a Nomad job:
+### Launch Vault as a Nomad job:
 `nomad job run vault_nomad_raft.hcl`
 
-Check the status of Vault:
-`nomad status vault`
+### Check the status of Vault:
+```
+[16:21] conormccullough | deployment/vault_on_nomad -> nomad status vault
+ID            = vault
+Name          = vault
+Submit Date   = 2023-04-08T15:29:02+10:00
+Type          = service
+Priority      = 50
+Datacenters   = dc1
+Namespace     = default
+Status        = running
+Periodic      = false
+Parameterized = false
 
+Summary
+Task Group  Queued  Starting  Running  Failed  Complete  Lost  Unknown
+vault       0       0         1        0       0         0     0
+
+Latest Deployment
+ID          = 27dd8ca7
+Status      = failed
+Description = Failed due to progress deadline
+
+Deployed
+Task Group  Desired  Placed  Healthy  Unhealthy  Progress Deadline
+vault       1        1       0        1          2023-04-08T15:39:02+10:00
+
+Allocations
+ID        Node ID   Task Group  Version  Desired  Status   Created     Modified
+36d3cc8f  19a97257  vault       0        run      running  53m52s ago  48m52s ago
+```
 
 The port will be forwarded by Nomad. 
 
 ### To access Vault:
-
 In the Nomad UI, you can find the host port information by following these steps:
 
 Open the Nomad UI in your web browser by navigating to http://<nomad_server_ip>:4646, where <nomad_server_ip> is the IP address of your Nomad server.
@@ -55,10 +81,7 @@ Demonstrating the above:
 
 # Additional Stuff
 
-## Exec into Nomad container
-
 ### Find the Nomad allocation ID:
-
 ```
 16:03] conormccullough | ~ -> nomad job status vault
 ID            = vault
@@ -91,7 +114,6 @@ ID        Node ID   Task Group  Version  Desired  Status   Created    Modified
 ```
 
 ### Exec into container:
-
 ```
 [16:03] conormccullough | ~ -> nomad alloc exec 36d3cc8f /bin/sh
 / # ps
@@ -103,7 +125,6 @@ PID   USER     TIME  COMMAND
 ```
 
 ### Initialize and Unseal Vault:
-
 ```
 / # vault operator init
 Unseal Key 1: 53ocyBNR/LnXLX2TDZ/Sea3pyC7UC+74EgjoXLvEi7pR
@@ -160,5 +181,4 @@ Code: 500. Errors:
 ```
 
 ### To-do:
-
 Above error from using 0.0.0.0:8201 for Rafts cluster_addr. Need to pass the nodes own IP address into its config as an env variable. 
