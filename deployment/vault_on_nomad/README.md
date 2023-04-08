@@ -37,12 +37,11 @@ In the "Task Resources" section, find the "Network" resource. You will see a tab
 
 For example, if you see the following table:
 
-css
-Copy code
 | Label   | Dynamic Port | Host    | To  |
 |---------|--------------|---------|-----|
-| vault   | 32100        | 10.0.0.1| 8200|
-| cluster | 32101        | 10.0.0.1| 8201|
+| vault   | 32100        | 127.0.0.1| 8200|
+| cluster | 32101        | 127.0.0.1| 8201|
+
 This means that the vault port (8200) inside the container is mapped to port 32100 on the host machine with IP address 10.0.0.1, and the cluster port (8201) inside the container is mapped to port 32101 on the same host machine.
 
 You can use these host IP and port information to connect to your container's services from your host machine or external network.
@@ -102,3 +101,64 @@ PID   USER     TIME  COMMAND
    53 root      0:00 /bin/sh
    59 root      0:00 ps
 ```
+
+### Initialize and Unseal Vault:
+
+```
+/ # vault operator init
+Unseal Key 1: 53ocyBNR/LnXLX2TDZ/Sea3pyC7UC+74EgjoXLvEi7pR
+Unseal Key 2: 45skJv5LcYrteOvYy5TezQlwBKCm1dxHjBxnY865rdMB
+Unseal Key 3: pZ/cCveaTNPkv5g2Qtt3w0AlKdf8ndWBmfkwxCrAFey3
+Unseal Key 4: /t1lU2fITtNoL3rAMfAnVKnFaATKXJ5oPDRg6FzJDSvp
+Unseal Key 5: eYHig8UguJUbvvUYDQeq9zSX32psSYMXw7nrljaz3gro
+
+Initial Root Token: hvs.XCuOiBzcQblmWqOa63sIMzYy
+
+Vault initialized with 5 key shares and a key threshold of 3. Please securely
+distribute the key shares printed above. When the Vault is re-sealed,
+restarted, or stopped, you must supply at least 3 of these keys to unseal it
+before it can start servicing requests.
+
+Vault does not store the generated root key. Without at least 3 keys to
+reconstruct the root key, Vault will remain permanently sealed!
+
+It is possible to generate new unseal keys, provided you have a quorum of
+existing unseal keys shares. See "vault operator rekey" for more information.
+/ # vault operator unseal 45skJv5LcYrteOvYy5TezQlwBKCm1dxHjBxnY865rdMB; vault operator unseal eYHig8UguJUbvvUYDQeq9zSX32psSYMXw7nrljaz3gro; vault operator unseal /t1lU2fITtNoL3rAMfAnVKnFaATKXJ5oPDRg6FzJDSvp
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    1/3
+Unseal Nonce       81c59777-e165-041a-1f7b-627735ab5b22
+Version            1.13.1
+Build Date         2023-03-23T12:51:35Z
+Storage Type       raft
+HA Enabled         true
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       5
+Threshold          3
+Unseal Progress    2/3
+Unseal Nonce       81c59777-e165-041a-1f7b-627735ab5b22
+Version            1.13.1
+Build Date         2023-03-23T12:51:35Z
+Storage Type       raft
+HA Enabled         true
+Error unsealing: Error making API request.
+
+URL: PUT http://localhost:8200/v1/sys/unseal
+Code: 500. Errors:
+
+* cannot use unspecified IP with raft storage: 0.0.0.0:8201
+```
+
+### To-do:
+
+Above error from using 0.0.0.0:8201 for Rafts cluster_addr. Need to pass the nodes own IP address into its config as an env variable. 
